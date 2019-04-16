@@ -174,6 +174,12 @@ public class ThreadContextImpl implements ThreadContextPlus {
     public void addErrorEntry(String message, Throwable t) {}
 
     @Override
+    public void trackResourceAcquired(Object resource, boolean withLocationStackTrace) {}
+
+    @Override
+    public void trackResourceReleased(Object resource) {}
+
+    @Override
     public @Nullable ServletRequestInfo getServletRequestInfo() {
         return servletRequestInfo;
     }
