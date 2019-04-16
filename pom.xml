@@ -73,136 +73,153 @@
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.2.1</version>
-        <configuration>
-          <dependencyReducedPomLocation>
-            ${project.build.directory}/dependency-reduced-pom.xml
-          </dependencyReducedPomLocation>
-          <createSourcesJar>true</createSourcesJar>
-          <shadeSourcesContent>true</shadeSourcesContent>
-          <artifactSet>
-            <excludes>
-              <exclude>org.glowroot.build:glowroot-build-checker-jdk6</exclude>
-            </excludes>
-          </artifactSet>
-          <transformers>
-            <transformer
-              implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-              <manifestEntries>
-                <Premain-Class>org.glowroot.zipkin.Premain</Premain-Class>
-                <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                <Can-Retransform-Classes>true</Can-Retransform-Classes>
-              </manifestEntries>
-            </transformer>
-          </transformers>
-          <filters>
-            <filter>
-              <artifact>*:*</artifact>
-              <excludes>
-                <exclude>META-INF/maven/**</exclude>
-              </excludes>
-            </filter>
-            <filter>
-              <artifact>com.squareup.okhttp3:okhttp</artifact>
-              <excludes>
-                <exclude>META-INF/proguard/**</exclude>
-              </excludes>
-            </filter>
-            <filter>
-              <artifact>com.google.guava:guava</artifact>
-              <excludes>
-                <exclude>META-INF/beans.xml</exclude>
-              </excludes>
-            </filter>
-            <filter>
-              <artifact>ch.qos.logback:logback-classic</artifact>
-              <excludes>
-                <exclude>META-INF/services/javax.servlet.ServletContainerInitializer</exclude>
-              </excludes>
-            </filter>
-          </filters>
-          <relocations>
-            <relocation>
-              <pattern>zipkin2</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.zipkin2</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>okhttp3</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.okhttp3</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>okio</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.okio</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>org.objectweb.asm</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.org.objectweb.asm</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>com.google</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.com.google</shadedPattern>
-            </relocation>
-            <relocation>
-              <pattern>org.slf4j</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.org.slf4j</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- this shades guava's internal use of java util logging which is needed to prevent
-                java util logging from being initialized early (e.g. in the case of wildfly which
-                wants to do some setup before jul is initialized) -->
-              <pattern>java.util.logging</pattern>
-              <shadedPattern>org.glowroot.engine.jul</shadedPattern>
-              <excludes>
-                <!-- don't shade the system property key "java.util.logging.manager" (unshaded
-                  string is needed in LazyPlatformMBeanServer) -->
-                <exclude>java.util.logging.manager</exclude>
-              </excludes>
-            </relocation>
-            <relocation>
-              <pattern>ch.qos.logback</pattern>
-              <shadedPattern>org.glowroot.zipkin.shaded.ch.qos.logback</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- logback internal constant, see
-                ch.qos.logback.classic.util.ContextInitializer -->
-              <rawString>true</rawString>
-              <pattern>^logback.configurationFile$</pattern>
-              <shadedPattern>glowroot.logback.configurationFile</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- shades logback internal constant, see
-                ch.qos.logback.classic.util.ContextInitializer -->
-              <rawString>true</rawString>
-              <pattern>^logback.groovy$</pattern>
-              <shadedPattern>glowroot.logback.groovy</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
-              <rawString>true</rawString>
-              <pattern>^logback(-test)?.xml$</pattern>
-              <shadedPattern>glowroot.logback$1.xml</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
-              <rawString>true</rawString>
-              <pattern>^logback.ContextSelector$</pattern>
-              <shadedPattern>glowroot.logback.ContextSelector</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
-              <rawString>true</rawString>
-              <pattern>^java:comp/env/logback/configuration-resource$</pattern>
-              <shadedPattern>java:comp/env/glowroot.logback/configuration-resource</shadedPattern>
-            </relocation>
-            <relocation>
-              <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
-              <rawString>true</rawString>
-              <pattern>^java:comp/env/logback/context-name$</pattern>
-              <shadedPattern>java:comp/env/glowroot.logback/context-name</shadedPattern>
-            </relocation>
-          </relocations>
-        </configuration>
         <executions>
           <execution>
+            <id>without-instrumentation-all</id>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <createSourcesJar>true</createSourcesJar>
+              <shadeSourcesContent>true</shadeSourcesContent>
+              <artifactSet>
+                <excludes>
+                  <!-- do not shade instrumentation, it is added back in below -->
+                  <exclude>org.glowroot.instrumentation:glowroot-instrumentation-all</exclude>
+                  <exclude>org.glowroot.build:glowroot-build-checker-jdk6</exclude>
+                </excludes>
+              </artifactSet>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Premain-Class>org.glowroot.zipkin.Premain</Premain-Class>
+                    <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                    <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                  </manifestEntries>
+                </transformer>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/maven/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.squareup.okhttp3:okhttp</artifact>
+                  <excludes>
+                    <exclude>META-INF/proguard/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.google.guava:guava</artifact>
+                  <excludes>
+                    <exclude>META-INF/beans.xml</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>ch.qos.logback:logback-classic</artifact>
+                  <excludes>
+                    <exclude>META-INF/services/javax.servlet.ServletContainerInitializer</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <relocations>
+                <relocation>
+                  <pattern>zipkin2</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.zipkin2</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>okhttp3</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.okhttp3</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>okio</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.okio</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.objectweb.asm</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.org.objectweb.asm</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.com.google</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.slf4j</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.org.slf4j</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- this shades guava's internal use of java util logging which is needed to prevent
+                    java util logging from being initialized early (e.g. in the case of wildfly which
+                    wants to do some setup before jul is initialized) -->
+                  <pattern>java.util.logging</pattern>
+                  <shadedPattern>org.glowroot.engine.jul</shadedPattern>
+                  <excludes>
+                    <!-- don't shade the system property key "java.util.logging.manager" (unshaded
+                      string is needed in LazyPlatformMBeanServer) -->
+                    <exclude>java.util.logging.manager</exclude>
+                  </excludes>
+                </relocation>
+                <relocation>
+                  <pattern>ch.qos.logback</pattern>
+                  <shadedPattern>org.glowroot.zipkin.shaded.ch.qos.logback</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- logback internal constant, see
+                    ch.qos.logback.classic.util.ContextInitializer -->
+                  <rawString>true</rawString>
+                  <pattern>^logback.configurationFile$</pattern>
+                  <shadedPattern>glowroot.logback.configurationFile</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- shades logback internal constant, see
+                    ch.qos.logback.classic.util.ContextInitializer -->
+                  <rawString>true</rawString>
+                  <pattern>^logback.groovy$</pattern>
+                  <shadedPattern>glowroot.logback.groovy</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
+                  <rawString>true</rawString>
+                  <pattern>^logback(-test)?.xml$</pattern>
+                  <shadedPattern>glowroot.logback$1.xml</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
+                  <rawString>true</rawString>
+                  <pattern>^logback.ContextSelector$</pattern>
+                  <shadedPattern>glowroot.logback.ContextSelector</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
+                  <rawString>true</rawString>
+                  <pattern>^java:comp/env/logback/configuration-resource$</pattern>
+                  <shadedPattern>java:comp/env/glowroot.logback/configuration-resource</shadedPattern>
+                </relocation>
+                <relocation>
+                  <!-- logback internal constant, see ch.qos.logback.classic.ClassicConstants -->
+                  <rawString>true</rawString>
+                  <pattern>^java:comp/env/logback/context-name$</pattern>
+                  <shadedPattern>java:comp/env/glowroot.logback/context-name</shadedPattern>
+                </relocation>
+              </relocations>
+            </configuration>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>with-instrumentation-all</id>
+            <configuration>
+              <dependencyReducedPomLocation>
+                ${project.build.directory}/dependency-reduced-pom.xml
+              </dependencyReducedPomLocation>
+              <artifactSet>
+                <includes>
+                  <include>org.glowroot.instrumentation:*</include>
+                </includes>
+              </artifactSet>
+            </configuration>
             <goals>
               <goal>shade</goal>
             </goals>
