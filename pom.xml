@@ -30,17 +30,17 @@
     <dependency>
       <groupId>org.glowroot</groupId>
       <artifactId>glowroot-instrumentation-api</artifactId>
-      <version>0.13.4-SNAPSHOT</version>
+      <version>0.13.5-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.glowroot</groupId>
       <artifactId>glowroot-engine</artifactId>
-      <version>0.13.4-SNAPSHOT</version>
+      <version>0.13.5-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.glowroot.instrumentation</groupId>
       <artifactId>glowroot-instrumentation-all</artifactId>
-      <version>0.13.4-SNAPSHOT</version>
+      <version>0.13.5-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

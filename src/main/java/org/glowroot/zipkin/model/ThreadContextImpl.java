@@ -180,6 +180,9 @@ public class ThreadContextImpl implements ThreadContextPlus {
     public void trackResourceReleased(Object resource) {}
 
     @Override
+    public <R> void propagateTrace(R request, Propagator<R> propagator) {}
+
+    @Override
     public @Nullable ServletRequestInfo getServletRequestInfo() {
         return servletRequestInfo;
     }
