@@ -19,9 +19,9 @@ import java.util.concurrent.Future;
 
 import org.junit.Test;
 
-import org.glowroot.engine.bytecode.api.ThreadContextPlus;
-import org.glowroot.instrumentation.api.AuxThreadContext;
-import org.glowroot.instrumentation.api.TraceEntry;
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextPlus;
+import org.glowroot.xyzzy.instrumentation.api.AuxThreadContext;
+import org.glowroot.xyzzy.instrumentation.api.Span;
 import org.glowroot.zipkin.util.Global;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +33,7 @@ public class AuxThreadTest extends BaseTest {
     @Test
     public void testWithOneAuxThread() throws Exception {
         // when
-        TraceEntry traceEntry = startTransaction("A", "B", "C");
+        Span incomingSpan = startIncomingSpan("A", "B", "C");
 
         ThreadContextPlus threadContext = Global.getThreadContextHolder().get();
         final AuxThreadContext auxThreadContext = threadContext.createAuxThreadContext();
@@ -41,15 +41,15 @@ public class AuxThreadTest extends BaseTest {
         Future<?> future = executor.submit(new Runnable() {
             @Override
             public void run() {
-                TraceEntry auxTraceEntry = auxThreadContext.start();
-                TraceEntry serviceCallEntry = startServiceCallEntry("X", "Y", "Z");
-                serviceCallEntry.end();
-                auxTraceEntry.end();
+                Span auxSpan = auxThreadContext.start();
+                Span outgoingSpan = startOutgoingSpan("X", "Y", "Z");
+                outgoingSpan.end();
+                auxSpan.end();
             }
         });
         future.get();
 
-        traceEntry.end();
+        incomingSpan.end();
 
         // then
         assertThat(reporter.getSpans()).hasSize(2);

@@ -19,18 +19,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import org.glowroot.engine.bytecode.api.ThreadContextPlus;
-import org.glowroot.engine.bytecode.api.ThreadContextThreadLocal;
-import org.glowroot.engine.impl.NopTransactionService;
-import org.glowroot.instrumentation.api.AsyncQueryEntry;
-import org.glowroot.instrumentation.api.AsyncTraceEntry;
-import org.glowroot.instrumentation.api.AuxThreadContext;
-import org.glowroot.instrumentation.api.MessageSupplier;
-import org.glowroot.instrumentation.api.QueryEntry;
-import org.glowroot.instrumentation.api.QueryMessageSupplier;
-import org.glowroot.instrumentation.api.Timer;
-import org.glowroot.instrumentation.api.TimerName;
-import org.glowroot.instrumentation.api.TraceEntry;
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextPlus;
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextThreadLocal;
+import org.glowroot.xyzzy.engine.impl.NopTransactionService;
+import org.glowroot.xyzzy.instrumentation.api.AsyncQuerySpan;
+import org.glowroot.xyzzy.instrumentation.api.AsyncSpan;
+import org.glowroot.xyzzy.instrumentation.api.AuxThreadContext;
+import org.glowroot.xyzzy.instrumentation.api.MessageSupplier;
+import org.glowroot.xyzzy.instrumentation.api.QueryMessageSupplier;
+import org.glowroot.xyzzy.instrumentation.api.QuerySpan;
+import org.glowroot.xyzzy.instrumentation.api.Span;
+import org.glowroot.xyzzy.instrumentation.api.Timer;
+import org.glowroot.xyzzy.instrumentation.api.TimerName;
 
 public class ThreadContextImpl implements ThreadContextPlus {
 
@@ -63,62 +63,52 @@ public class ThreadContextImpl implements ThreadContextPlus {
     }
 
     @Override
-    public TraceEntry startTransaction(String transactionType, String transactionName,
+    public Span startIncomingSpan(String transactionType, String transactionName,
             MessageSupplier messageSupplier, TimerName timerName) {
-        return NopTransactionService.TRACE_ENTRY;
+        return NopTransactionService.LOCAL_SPAN;
     }
 
     @Override
-    public TraceEntry startTransaction(String transactionType, String transactionName,
+    public Span startIncomingSpan(String transactionType, String transactionName,
             MessageSupplier messageSupplier, TimerName timerName,
             AlreadyInTransactionBehavior alreadyInTransactionBehavior) {
-        return NopTransactionService.TRACE_ENTRY;
+        return NopTransactionService.LOCAL_SPAN;
     }
 
     @Override
-    public TraceEntry startTraceEntry(MessageSupplier messageSupplier, TimerName timerName) {
-        return NopTransactionService.TRACE_ENTRY;
+    public Span startLocalSpan(MessageSupplier messageSupplier, TimerName timerName) {
+        return NopTransactionService.LOCAL_SPAN;
     }
 
     @Override
-    public AsyncTraceEntry startAsyncTraceEntry(MessageSupplier messageSupplier,
-            TimerName timerName) {
-        return NopTransactionService.ASYNC_TRACE_ENTRY;
-    }
-
-    @Override
-    public QueryEntry startQueryEntry(String queryType, String queryText,
+    public QuerySpan startQuerySpan(String queryType, String queryText,
             QueryMessageSupplier queryMessageSupplier, TimerName timerName) {
-        // TODO pass along queryType
-        return new QueryEntryImpl(spanContext, queryText, queryMessageSupplier);
+        return new QuerySpanImpl(spanContext, queryType, queryText, queryMessageSupplier);
     }
 
     @Override
-    public QueryEntry startQueryEntry(String queryType, String queryText, long queryExecutionCount,
+    public QuerySpan startQuerySpan(String queryType, String queryText, long queryExecutionCount,
             QueryMessageSupplier queryMessageSupplier, TimerName timerName) {
-        // TODO pass along queryType and queryExecutionCount
-        return new QueryEntryImpl(spanContext, queryText, queryMessageSupplier);
+        // TODO pass along queryExecutionCount
+        return new QuerySpanImpl(spanContext, queryType, queryText, queryMessageSupplier);
     }
 
     @Override
-    public AsyncQueryEntry startAsyncQueryEntry(String queryType, String queryText,
+    public AsyncQuerySpan startAsyncQuerySpan(String queryType, String queryText,
             QueryMessageSupplier queryMessageSupplier, TimerName timerName) {
-        // TODO pass along queryType
-        return new QueryEntryImpl(spanContext, queryText, queryMessageSupplier);
+        return new QuerySpanImpl(spanContext, queryType, queryText, queryMessageSupplier);
     }
 
     @Override
-    public TraceEntry startServiceCallEntry(String type, String text,
+    public Span startOutgoingSpan(String type, String text,
             MessageSupplier messageSupplier, TimerName timerName) {
-        // TODO pass along type
-        return new TraceEntryImpl(spanContext, messageSupplier);
+        return new SpanImpl(spanContext, type, messageSupplier);
     }
 
     @Override
-    public AsyncTraceEntry startAsyncServiceCallEntry(String type, String text,
+    public AsyncSpan startAsyncOutgoingSpan(String type, String text,
             MessageSupplier messageSupplier, TimerName timerName) {
-        // TODO pass along type
-        return new TraceEntryImpl(spanContext, messageSupplier);
+        return new SpanImpl(spanContext, type, messageSupplier);
     }
 
     @Override
@@ -136,9 +126,6 @@ public class ThreadContextImpl implements ThreadContextPlus {
 
     @Override
     public void setTransactionAsyncComplete() {}
-
-    @Override
-    public void setTransactionOuter() {}
 
     @Override
     public void setTransactionType(String transactionType, int priority) {}
@@ -178,9 +165,6 @@ public class ThreadContextImpl implements ThreadContextPlus {
 
     @Override
     public void trackResourceReleased(Object resource) {}
-
-    @Override
-    public <R> void propagateTrace(R request, Propagator<R> propagator) {}
 
     @Override
     public @Nullable ServletRequestInfo getServletRequestInfo() {

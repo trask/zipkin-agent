@@ -15,28 +15,33 @@
  */
 package org.glowroot.zipkin.model;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import zipkin2.Span;
 
-import org.glowroot.engine.impl.NopTransactionService;
-import org.glowroot.engine.util.Throwables;
-import org.glowroot.instrumentation.api.AsyncTraceEntry;
-import org.glowroot.instrumentation.api.MessageSupplier;
-import org.glowroot.instrumentation.api.ThreadContext;
-import org.glowroot.instrumentation.api.Timer;
-import org.glowroot.instrumentation.api.internal.ReadableMessage;
+import org.glowroot.xyzzy.engine.impl.NopTransactionService;
+import org.glowroot.xyzzy.engine.util.Throwables;
+import org.glowroot.xyzzy.instrumentation.api.AsyncQuerySpan;
+import org.glowroot.xyzzy.instrumentation.api.QueryMessageSupplier;
+import org.glowroot.xyzzy.instrumentation.api.Timer;
 import org.glowroot.zipkin.util.Global;
 
-public class TraceEntryImpl implements AsyncTraceEntry {
+class QuerySpanImpl implements AsyncQuerySpan {
 
     private final SpanContext spanContext;
-    private final MessageSupplier messageSupplier;
+    private final String queryType;
+    private final String queryText;
+    private final QueryMessageSupplier queryMessageSupplier;
     private final long startTimeMicros;
 
-    protected TraceEntryImpl(SpanContext spanContext, MessageSupplier messageSupplier) {
-        this.spanContext = spanContext;
-        this.messageSupplier = messageSupplier;
+    QuerySpanImpl(SpanContext context, String queryType, String queryText,
+            QueryMessageSupplier queryMessageSupplier) {
+        this.spanContext = context;
+        this.queryType = queryType;
+        this.queryText = queryText;
+        this.queryMessageSupplier = queryMessageSupplier;
         startTimeMicros = Global.currentTimeMicros();
     }
 
@@ -76,44 +81,54 @@ public class TraceEntryImpl implements AsyncTraceEntry {
     }
 
     @Override
-    public Object getMessageSupplier() {
-        return messageSupplier;
+    public @Nullable Object getMessageSupplier() {
+        return null;
     }
+
+    @Override
+    public void rowNavigationAttempted() {}
+
+    @Override
+    public void incrementCurrRow() {}
+
+    @Override
+    public void setCurrRow(long row) {}
 
     @Override
     public void stopSyncTimer() {}
 
     @Override
-    public Timer extendSyncTimer(ThreadContext currThreadContext) {
+    public Timer extendSyncTimer() {
         return NopTransactionService.TIMER;
     }
 
-    protected void postFinish() {}
-
     private void finish() {
         Global.report(newBuilder().build());
-        postFinish();
     }
 
     private void finish(Throwable t) {
         Global.report(newBuilder()
                 .putTag("error", Throwables.getBestMessage(t))
                 .build());
-        postFinish();
     }
 
     private Span.Builder newBuilder() {
         long durationMicros = Global.currentTimeMicros() - startTimeMicros;
-        return Span.newBuilder()
+        Span.Builder builder = Span.newBuilder()
                 .traceId(spanContext.traceIdString())
                 .parentId(spanContext.parentSpanIdString())
                 .id(spanContext.spanIdString())
-                .name(getSpanName())
-                .timestamp(startTimeMicros)
+                .name(queryText)
+                .putTag("type", queryType);
+        Map<String, ?> detail = queryMessageSupplier.get();
+        for (Map.Entry<String, ?> entry : detail.entrySet()) {
+            Object value = entry.getValue();
+            if (value != null) {
+                // TODO do tags accept null values?
+                builder.putTag(entry.getKey(), value.toString());
+            }
+        }
+        return builder.timestamp(startTimeMicros)
                 .duration(Math.max(durationMicros, 1));
-    }
-
-    private String getSpanName() {
-        return ((ReadableMessage) messageSupplier.get()).getText();
     }
 }

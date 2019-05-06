@@ -15,14 +15,14 @@
  */
 package org.glowroot.zipkin;
 
-import org.glowroot.engine.bytecode.api.ThreadContextThreadLocal;
-import org.glowroot.engine.weaving.AgentSPI;
-import org.glowroot.instrumentation.api.MessageSupplier;
-import org.glowroot.instrumentation.api.TimerName;
-import org.glowroot.instrumentation.api.TraceEntry;
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextThreadLocal;
+import org.glowroot.xyzzy.engine.weaving.AgentSPI;
+import org.glowroot.xyzzy.instrumentation.api.MessageSupplier;
+import org.glowroot.xyzzy.instrumentation.api.Span;
+import org.glowroot.xyzzy.instrumentation.api.TimerName;
 import org.glowroot.zipkin.model.SpanContext;
+import org.glowroot.zipkin.model.SpanImpl;
 import org.glowroot.zipkin.model.ThreadContextImpl;
-import org.glowroot.zipkin.model.TraceEntryImpl;
 import org.glowroot.zipkin.util.Global;
 
 class AgentImpl implements AgentSPI {
@@ -32,7 +32,7 @@ class AgentImpl implements AgentSPI {
     // in addition to returning TraceEntry, this method needs to put the newly created
     // ThreadContextPlus into the threadContextHolder that is passed in
     @Override
-    public TraceEntry startTransaction(String transactionType, String transactionName,
+    public Span startIncomingSpan(String transactionType, String transactionName,
             MessageSupplier messageSupplier, TimerName timerName,
             ThreadContextThreadLocal.Holder threadContextHolder, int rootNestingGroupId,
             int rootSuppressionKeyId) {
@@ -46,13 +46,13 @@ class AgentImpl implements AgentSPI {
         return new RootTraceEntryImpl(spanContext, messageSupplier, threadContextHolder);
     }
 
-    private static class RootTraceEntryImpl extends TraceEntryImpl {
+    private static class RootTraceEntryImpl extends SpanImpl {
 
         private final ThreadContextThreadLocal.Holder threadContextHolder;
 
         public RootTraceEntryImpl(SpanContext spanContext, MessageSupplier messageSupplier,
                 ThreadContextThreadLocal.Holder threadContextHolder) {
-            super(spanContext, messageSupplier);
+            super(spanContext, "", messageSupplier);
             this.threadContextHolder = threadContextHolder;
         }
 

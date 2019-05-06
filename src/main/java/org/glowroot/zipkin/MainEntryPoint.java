@@ -24,8 +24,8 @@ import zipkin2.reporter.Reporter;
 import zipkin2.reporter.Sender;
 import zipkin2.reporter.okhttp3.OkHttpSender;
 
-import org.glowroot.engine.init.EngineModule;
-import org.glowroot.engine.init.MainEntryPointUtil;
+import org.glowroot.xyzzy.engine.init.EngineModule;
+import org.glowroot.xyzzy.engine.init.MainEntryPointUtil;
 import org.glowroot.zipkin.util.Global;
 
 public class MainEntryPoint {
@@ -36,7 +36,7 @@ public class MainEntryPoint {
 
     public static void premain(Instrumentation instrumentation, File agentJarFile) {
         // DO NOT USE ANY GUAVA CLASSES before initLogging() because they trigger loading of jul
-        // (and thus org.glowroot.engine.jul.Logger and thus glowroot's shaded slf4j)
+        // (and thus org.glowroot.xyzzy.engine.jul.Logger and thus glowroot's shaded slf4j)
         Logger startupLogger;
         try {
             startupLogger = MainEntryPointUtil.initLogging("org.glowroot.zipkin", instrumentation);
@@ -62,8 +62,8 @@ public class MainEntryPoint {
 
         AgentImpl agent = new AgentImpl();
 
-        EngineModule.createWithManyDefaults(instrumentation, tmpDir,
-                Global.getThreadContextThreadLocal(), new GlowrootServiceImpl(), agent,
+        EngineModule.createWithSomeDefaults(instrumentation, tmpDir,
+                Global.getThreadContextThreadLocal(), new XyzzyServiceImpl(), agent,
                 agentJarFile);
 
         if (USE_CONSOLE_REPORTER) {

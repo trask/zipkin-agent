@@ -17,7 +17,7 @@ package org.glowroot.zipkin;
 
 import org.junit.Test;
 
-import org.glowroot.instrumentation.api.TraceEntry;
+import org.glowroot.xyzzy.instrumentation.api.Span;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,8 +28,8 @@ public class MainThreadTest extends BaseTest {
     @Test
     public void testWithNoOutgoingSpans() {
         // when
-        TraceEntry traceEntry = startTransaction("A", "B", "C");
-        traceEntry.end();
+        Span span = startIncomingSpan("A", "B", "C");
+        span.end();
 
         // then
         assertThat(reporter.getSpans()).hasSize(1);
@@ -38,12 +38,12 @@ public class MainThreadTest extends BaseTest {
     @Test
     public void testWithOneOutgoingSpan() {
         // when
-        TraceEntry traceEntry = startTransaction("A", "B", "C");
+        Span span = startIncomingSpan("A", "B", "C");
 
-        TraceEntry serviceCallEntry = startServiceCallEntry("X", "Y", "Z");
+        Span serviceCallEntry = startOutgoingSpan("X", "Y", "Z");
         serviceCallEntry.end();
 
-        traceEntry.end();
+        span.end();
 
         // then
         assertThat(reporter.getSpans()).hasSize(2);
@@ -52,14 +52,14 @@ public class MainThreadTest extends BaseTest {
     @Test
     public void testWithMultipleOutgoingSpans() {
         // when
-        TraceEntry traceEntry = startTransaction("A", "B", "C");
+        Span span = startIncomingSpan("A", "B", "C");
 
         for (int i = 0; i < 10; i++) {
-            TraceEntry serviceCallEntry = startServiceCallEntry("X", "Y" + i, "Z" + i);
+            Span serviceCallEntry = startOutgoingSpan("X", "Y" + i, "Z" + i);
             serviceCallEntry.end();
         }
 
-        traceEntry.end();
+        span.end();
 
         // then
         assertThat(reporter.getSpans()).hasSize(11);

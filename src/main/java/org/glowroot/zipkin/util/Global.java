@@ -17,10 +17,10 @@ package org.glowroot.zipkin.util;
 
 import java.util.Random;
 
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextThreadLocal;
+
 import zipkin2.Span;
 import zipkin2.reporter.Reporter;
-
-import org.glowroot.engine.bytecode.api.ThreadContextThreadLocal;
 
 // global state used instead of passing these to various classes (e.g. ThreadContextImpl) in order
 // to reduce memory footprint

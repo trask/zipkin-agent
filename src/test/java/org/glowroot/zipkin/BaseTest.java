@@ -21,10 +21,10 @@ import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Before;
 
-import org.glowroot.engine.impl.ImmutableTimerNameImpl;
-import org.glowroot.instrumentation.api.MessageSupplier;
-import org.glowroot.instrumentation.api.TimerName;
-import org.glowroot.instrumentation.api.TraceEntry;
+import org.glowroot.xyzzy.engine.impl.ImmutableTimerNameImpl;
+import org.glowroot.xyzzy.instrumentation.api.MessageSupplier;
+import org.glowroot.xyzzy.instrumentation.api.Span;
+import org.glowroot.xyzzy.instrumentation.api.TimerName;
 import org.glowroot.zipkin.util.Global;
 
 public abstract class BaseTest {
@@ -48,15 +48,15 @@ public abstract class BaseTest {
         executor.shutdown();
     }
 
-    protected TraceEntry startTransaction(String transactionType, String transactionName,
+    protected Span startIncomingSpan(String transactionType, String transactionName,
             String message) {
-        return agent.startTransaction(transactionType, transactionName,
+        return agent.startIncomingSpan(transactionType, transactionName,
                 MessageSupplier.create(message), DUMMY_TIMER_NAME, Global.getThreadContextHolder(),
                 0, 0);
     }
 
-    protected TraceEntry startServiceCallEntry(String type, String text, String message) {
-        return Global.getThreadContextHolder().get().startServiceCallEntry(type, text,
+    protected Span startOutgoingSpan(String type, String text, String message) {
+        return Global.getThreadContextHolder().get().startOutgoingSpan(type, text,
                 MessageSupplier.create(message), DUMMY_TIMER_NAME);
     }
 }

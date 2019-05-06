@@ -17,9 +17,9 @@ package org.glowroot.zipkin;
 
 import java.util.concurrent.TimeUnit;
 
-import org.glowroot.engine.annotation.spi.GlowrootServiceSPI;
+import org.glowroot.xyzzy.engine.annotation.spi.XyzzyServiceSPI;
 
-class GlowrootServiceImpl implements GlowrootServiceSPI {
+class XyzzyServiceImpl implements XyzzyServiceSPI {
 
     @Override
     public void setTransactionType(String transactionType) {}
@@ -35,7 +35,4 @@ class GlowrootServiceImpl implements GlowrootServiceSPI {
 
     @Override
     public void setTransactionSlowThreshold(long threshold, TimeUnit unit) {}
-
-    @Override
-    public void setTransactionOuter() {}
 }

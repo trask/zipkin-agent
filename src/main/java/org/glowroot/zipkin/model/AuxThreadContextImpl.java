@@ -19,13 +19,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import org.glowroot.engine.bytecode.api.ThreadContextPlus;
-import org.glowroot.engine.bytecode.api.ThreadContextThreadLocal;
-import org.glowroot.engine.impl.NopTransactionService;
-import org.glowroot.instrumentation.api.AuxThreadContext;
-import org.glowroot.instrumentation.api.ThreadContext.ServletRequestInfo;
-import org.glowroot.instrumentation.api.Timer;
-import org.glowroot.instrumentation.api.TraceEntry;
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextPlus;
+import org.glowroot.xyzzy.engine.bytecode.api.ThreadContextThreadLocal;
+import org.glowroot.xyzzy.engine.impl.NopTransactionService;
+import org.glowroot.xyzzy.instrumentation.api.AuxThreadContext;
+import org.glowroot.xyzzy.instrumentation.api.Span;
+import org.glowroot.xyzzy.instrumentation.api.ThreadContext.ServletRequestInfo;
+import org.glowroot.xyzzy.instrumentation.api.Timer;
 import org.glowroot.zipkin.util.Global;
 
 public class AuxThreadContextImpl implements AuxThreadContext {
@@ -40,23 +40,23 @@ public class AuxThreadContextImpl implements AuxThreadContext {
     }
 
     @Override
-    public TraceEntry start() {
+    public Span start() {
         return start(false);
     }
 
     @Override
-    public TraceEntry startAndMarkAsyncTransactionComplete() {
+    public Span startAndMarkAsyncTransactionComplete() {
         return start(true);
     }
 
-    private TraceEntry start(boolean completeAsyncTransaction) {
+    private Span start(boolean completeAsyncTransaction) {
         ThreadContextThreadLocal.Holder threadContextHolder = Global.getThreadContextHolder();
         ThreadContextPlus threadContext = threadContextHolder.get();
         if (threadContext != null) {
             if (completeAsyncTransaction) {
                 threadContext.setTransactionAsyncComplete();
             }
-            return NopTransactionService.TRACE_ENTRY;
+            return NopTransactionService.LOCAL_SPAN;
         }
         SpanContext spanContext = new SpanContext(parentSpanContext.getTraceIdHigh(),
                 parentSpanContext.getTraceId(), parentSpanContext.getSpanId(), Global.nextId());
@@ -69,7 +69,7 @@ public class AuxThreadContextImpl implements AuxThreadContext {
         return new AuxRootEntryImpl(threadContextHolder);
     }
 
-    private static class AuxRootEntryImpl implements TraceEntry {
+    private static class AuxRootEntryImpl implements Span {
 
         private final ThreadContextThreadLocal.Holder threadContextHolder;
 
